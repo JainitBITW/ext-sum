@@ -25,6 +25,7 @@ import torch.nn as nn
 import torch.nn.utils.rnn as rnn
 
 import dgl
+import lightining as pl
 
 # from module.GAT import GAT, GAT_ffn
 from module.Encoder import sentEncoder
@@ -253,3 +254,38 @@ def get_snode_feat(G, feat):
         feature.append(g.nodes[snode_id].data[feat])
         glen.append(len(snode_id))
     return feature, glen
+
+
+
+class GraphLevelGNN(pl.LightningModule):
+    def __init__(self, **model_kwargs):
+        super().__init__()
+        # Saving hyperparameters
+        self.save_hyperparameters()
+
+        self.model = HSumGraph(**model_kwargs)
+        self.loss_module = torch.nn.CrossEntropyLoss(reduction='none')
+
+    def forward(self, data, mode="train"):
+        x, edge_index, batch_idx = data.x, data.edge_index, data.batch
+        x = self.model(x, edge_index, batch_idx)
+        
+
+    def configure_optimizers(self):
+        # High lr because of small dataset and small model
+        optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, self.parameters()), lr=5e-6)        
+        return optimizer
+    
+    def training_step(self, batch, batch_idx):
+        loss, acc = self.forward(batch, mode="train")
+        self.log("train_loss", loss)
+        self.log("train_acc", acc)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        _, acc = self.forward(batch, mode="val")
+        self.log("val_acc", acc)
+
+    def test_step(self, batch, batch_idx):
+        _, acc = self.forward(batch, mode="test")
+        self.log("test_acc", acc)

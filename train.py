@@ -18,6 +18,7 @@
 # ==============================================================================
 
 
+
 import argparse
 import datetime
 import os
@@ -30,12 +31,14 @@ import numpy as np
 import torch
 from rouge import Rouge
 
-from HiGraph import HSumGraph, HSumDocGraph
+from HiGraph import HSumGraph, HSumDocGraph,GraphLevelGNN
 from Tester import SLTester
 from module.dataloader import ExampleSet, MultiExampleSet, graph_collate_fn
 from module.embedding import Word_Embedding
 from module.vocabulary import Vocab
 from tools.logger import *
+import lightining as pl
+from lightning.pytorch.callbacks import ModelCheckpoint
 
 _DEBUG_FLAG_ = False
 
@@ -353,33 +356,55 @@ def main():
 
     train_w2s_path = os.path.join(args.cache_dir, "train.w2s.tfidf.jsonl")
     val_w2s_path = os.path.join(args.cache_dir, "val.w2s.tfidf.jsonl")
+    pl.seed_everything(42)
 
+    # Create a PyTorch Lightning trainer with the generation callback
+    CHECKPOINT_PATH="~/graph-checkpoints/"
+    root_dir = os.path.join(CHECKPOINT_PATH, "GraphLevel" + model_name)
+    os.makedirs(root_dir, exist_ok=True)
+    AVAIL_GPUS = min(1, torch.cuda.device_count())
+    trainer = pl.Trainer(
+        default_root_dir=root_dir,
+        callbacks=[ModelCheckpoint(save_weights_only=True, mode="max", monitor="val_acc")],
+        accelerator="cuda",
+        devices=AVAIL_GPUS,
+        max_epochs=500,
+        enable_progress_bar=False,
+    )
+    trainer.logger._default_hp_metric = None
     if hps.model == "HSG":
-        model = HSumGraph(hps, embed)
-        logger.info("[MODEL] HeterSumGraph ")
-        dataset = ExampleSet(DATA_FILE, vocab, hps.doc_max_timesteps, hps.sent_max_len, FILTER_WORD, train_w2s_path)
-        train_loader = torch.utils.data.DataLoader(dataset, batch_size=hps.batch_size, shuffle=True, num_workers=32,collate_fn=graph_collate_fn, persistent_workers=True)
-        del dataset
-        valid_dataset = ExampleSet(VALID_FILE, vocab, hps.doc_max_timesteps, hps.sent_max_len, FILTER_WORD, val_w2s_path)
-        valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=hps.batch_size, shuffle=False, collate_fn=graph_collate_fn, num_workers=32, persistent_workers=True)
+            model = HSumGraph(hps, embed)
+            logger.info("[MODEL] HeterSumGraph ")
+            dataset = ExampleSet(DATA_FILE, vocab, hps.doc_max_timesteps, hps.sent_max_len, FILTER_WORD, train_w2s_path)
+            train_loader = torch.utils.data.DataLoader(dataset, batch_size=hps.batch_size, shuffle=True, num_workers=32,collate_fn=graph_collate_fn)
+            del dataset
+            valid_dataset = ExampleSet(VALID_FILE, vocab, hps.doc_max_timesteps, hps.sent_max_len, FILTER_WORD, val_w2s_path)
+            valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=hps.batch_size, shuffle=False, collate_fn=graph_collate_fn, num_workers=32)
     elif hps.model == "HDSG":
-        model = HSumDocGraph(hps, embed)
-        logger.info("[MODEL] HeterDocSumGraph ")
-        train_w2d_path = os.path.join(args.cache_dir, "train.w2d.tfidf.jsonl")
-        dataset = MultiExampleSet(DATA_FILE, vocab, hps.doc_max_timesteps, hps.sent_max_len, FILTER_WORD, train_w2s_path, train_w2d_path)
-        train_loader = torch.utils.data.DataLoader(dataset, batch_size=hps.batch_size, shuffle=True, num_workers=32,collate_fn=graph_collate_fn, persistent_workers=True)
-        del dataset
-        val_w2d_path = os.path.join(args.cache_dir, "val.w2d.tfidf.jsonl")
-        valid_dataset = MultiExampleSet(VALID_FILE, vocab, hps.doc_max_timesteps, hps.sent_max_len, FILTER_WORD, val_w2s_path, val_w2d_path)
-        valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=hps.batch_size, shuffle=False,collate_fn=graph_collate_fn, num_workers=32, persistent_workers=True)  # Shuffle Must be False for ROUGE evaluation
+            model = HSumDocGraph(hps, embed)
+            logger.info("[MODEL] HeterDocSumGraph ")
+            train_w2d_path = os.path.join(args.cache_dir, "train.w2d.tfidf.jsonl")
+            dataset = MultiExampleSet(DATA_FILE, vocab, hps.doc_max_timesteps, hps.sent_max_len, FILTER_WORD, train_w2s_path, train_w2d_path)
+            train_loader = torch.utils.data.DataLoader(dataset, batch_size=hps.batch_size, shuffle=True, num_workers=32,collate_fn=graph_collate_fn)
+            del dataset
+            val_w2d_path = os.path.join(args.cache_dir, "val.w2d.tfidf.jsonl")
+            valid_dataset = MultiExampleSet(VALID_FILE, vocab, hps.doc_max_timesteps, hps.sent_max_len, FILTER_WORD, val_w2s_path, val_w2d_path)
+            valid_loader = torch.utils.data.DataLoader(valid_dataset, batch_size=hps.batch_size, shuffle=False,collate_fn=graph_collate_fn, num_workers=32)  # Shuffle Must be False for ROUGE evaluation
     else:
-        logger.error("[ERROR] Invalid Model Type!")
-        raise NotImplementedError("Model Type has not been implemented")
+            logger.error("[ERROR] Invalid Model Type!")
+            raise NotImplementedError("Model Type has not been implemented")
 
+    # Check whether pretrained model exists. If yes, load it and skip training
+    pretrained_filename = os.path.join(CHECKPOINT_PATH, "GraphLevel%s.ckpt" % model_name)
+    if os.path.isfile(pretrained_filename):
+        print("Found pretrained model, loading...")
+        model = GraphLevelGNN.load_from_checkpoint(pretrained_filename)
+    else:
+        pl.seed_everything(42)
+        
+        trainer.fit(model, train_loader, valid_loader)
+        model = GraphLevelGNN.load_from_checkpoint(trainer.checkpoint_callback.best_model_path)
 
-    if args.cuda:
-        model.to(torch.device("cuda:0"))
-        logger.info("[INFO] Use cuda")
 
     setup_training(model, train_loader, valid_loader, valid_dataset, hps)
 
