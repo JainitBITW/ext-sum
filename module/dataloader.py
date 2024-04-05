@@ -41,7 +41,7 @@ import torch.utils.data
 import torch.nn.functional as F
 
 from tools.logger import *
-
+import spacy
 import dgl
 from dgl.data.utils import save_graphs, load_graphs
 
@@ -51,11 +51,39 @@ punctuations = [',', '.', ':', ';', '?', '(', ')', '[', ']', '&', '!', '*', '@',
 FILTERWORD.extend(punctuations)
 
 
+nlp = spacy.load("en_core_web_sm")
+
+def identify_named_entities_per_word(words):
+  """
+  Identifies named entities for each word in a list using spaCy.
+
+  Args:
+      words: A list of words.
+
+  Returns:
+      A list containing the named entity type for each word, 
+      or None if not found.
+  """
+  named_entities = []
+  for word in words:
+    # Wrap the word in a document to enable NER
+    doc = nlp(word)
+    # print(nlp.get_pipe('ner').labels)
+    # Assuming there's only one token (the word itself)
+    entity_type = doc[0].ent_iob_ if doc else None
+    
+    if entity_type == "O":
+        # named_entities.append(0)/
+        continue
+    else: 
+        named_entities.append(word)
+
+  return named_entities
 ######################################### Example #########################################
 
 class Example(object):
     """Class representing a train/val/test example for single-document extractive summarization."""
-
+    
     def __init__(self, article_sents, abstract_sents, vocab, sent_max_len, label):
         """ Initializes the Example, performing tokenization and truncation to produce the encoder, decoder and target sequences, which are stored in self.
 
@@ -82,8 +110,9 @@ class Example(object):
                 self.original_article_sents.extend(doc)
         for sent in self.original_article_sents:
             article_words = sent.split()
+            ner = identify_named_entities_per_word(article_words)
             self.enc_sent_len.append(len(article_words))  # store the length before padding
-            self.enc_sent_input.append([vocab.word2id(w.lower()) for w in article_words])  # list of word ids; OOVs are represented by the id for UNK token
+            self.enc_sent_input.append([vocab.word2id('[NAME]') if w not in ner else vocab.word2id(w.lower()) for w in article_words])
         self._pad_encoder_input(vocab.word2id('[PAD]'))
 
         # Store the label
@@ -196,6 +225,7 @@ class ExampleSet(torch.utils.data.Dataset):
         e = e[new_index]
         e["summary"] = e.setdefault("summary", [])
         example = Example(e["text"], e["summary"], self.vocab, self.sent_max_len, e["label"])
+        
         
         return example
 

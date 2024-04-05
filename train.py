@@ -110,7 +110,7 @@ def run_training(model, train_loader, valid_loader, valset, hps, train_dir):
             model.train()
 
             if hps.cuda:
-                G = G.to(torch.device("cuda"))
+                G = G.to(torch.device(int(hps.gpu)))
             graph_device = G.device
             outputs = model.forward(G)  # [n_snodes, 2]
             snode_id = G.filter_nodes(lambda nodes: nodes.data["dtype"] == 1)
@@ -202,7 +202,7 @@ def run_eval(model, loader, valset, hps, best_loss, best_F, non_descent_cnt, sav
         tester = SLTester(model, hps.m)
         for i, (G, index) in enumerate(loader):
             if hps.cuda:
-               G = G.to(torch.device(0))
+               G = G.to(torch.device(int(hps.gpu)))
             tester.evaluation(G, index, valset)
 
     running_avg_loss = tester.running_avg_loss
@@ -378,7 +378,7 @@ def main():
 
 
     if args.cuda:
-        model.to(torch.device("cuda:0"))
+        model= model.to(torch.device(int(args.gpu)))
         logger.info("[INFO] Use cuda")
 
     setup_training(model, train_loader, valid_loader, valid_dataset, hps)

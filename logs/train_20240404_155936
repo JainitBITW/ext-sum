@@ -18,3 +18,46 @@
 2024-04-04 16:00:02,580 INFO    : [INFO] Create new model for training...
 2024-04-04 16:00:02,580 INFO    : [INFO] Starting run_training
 2024-04-04 16:01:03,989 INFO    :        | end of iter   0 | time: 10.09s | train loss 0.1832 | 
+2024-04-04 16:09:42,968 INFO    :        | end of iter 100 | time:  5.11s | train loss 6.9279 | 
+2024-04-04 16:18:40,586 INFO    :        | end of iter 200 | time:  4.92s | train loss 6.0423 | 
+2024-04-04 16:27:33,634 INFO    :        | end of iter 300 | time:  4.94s | train loss 5.8727 | 
+2024-04-04 16:36:28,759 INFO    :        | end of iter 400 | time:  5.00s | train loss 5.8628 | 
+2024-04-04 16:45:23,406 INFO    :        | end of iter 500 | time:  4.87s | train loss 5.8085 | 
+2024-04-04 16:54:22,884 INFO    :        | end of iter 600 | time:  5.07s | train loss 5.8098 | 
+2024-04-04 17:03:17,832 INFO    :        | end of iter 700 | time:  3.58s | train loss 5.7685 | 
+2024-04-04 17:12:06,065 INFO    :        | end of iter 800 | time:  4.54s | train loss 5.7354 | 
+2024-04-04 17:20:43,172 INFO    :        | end of iter 900 | time:  4.90s | train loss 5.7399 | 
+2024-04-04 17:29:41,591 INFO    :        | end of iter 1000 | time:  5.13s | train loss 5.7329 | 
+2024-04-04 17:38:12,222 INFO    :        | end of iter 1100 | time:  5.06s | train loss 5.6986 | 
+2024-04-04 17:47:08,424 INFO    :        | end of iter 1200 | time:  4.94s | train loss 5.7179 | 
+2024-04-04 17:55:56,251 INFO    :        | end of iter 1300 | time:  4.99s | train loss 5.7106 | 
+2024-04-04 18:04:52,174 INFO    :        | end of iter 1400 | time:  4.98s | train loss 5.6677 | 
+2024-04-04 18:13:35,826 INFO    :        | end of iter 1500 | time:  5.13s | train loss 5.6753 | 
+2024-04-04 18:22:17,590 INFO    :        | end of iter 1600 | time:  5.28s | train loss 5.6674 | 
+2024-04-04 18:31:10,256 INFO    :        | end of iter 1700 | time:  4.90s | train loss 5.6528 | 
+2024-04-04 18:40:10,620 INFO    :        | end of iter 1800 | time:  5.22s | train loss 5.6313 | 
+2024-04-04 18:49:05,648 INFO    :        | end of iter 1900 | time:  5.13s | train loss 5.6539 | 
+2024-04-04 18:57:48,288 INFO    :        | end of iter 2000 | time:  5.04s | train loss 5.6721 | 
+2024-04-04 19:07:00,863 INFO    :        | end of iter 2100 | time:  5.17s | train loss 5.6656 | 
+2024-04-04 19:15:52,193 INFO    :        | end of iter 2200 | time:  5.10s | train loss 5.6680 | 
+2024-04-04 19:19:20,095 INFO    : [INFO] The learning rate now is 0.000250
+2024-04-04 19:19:20,096 INFO    :    | end of epoch   1 | time: 11956.40s | epoch train loss 5.7930 | 
+2024-04-04 19:19:20,096 INFO    : [INFO] Found new best model with 5.793 running_train_loss. Saving to models/train/bestmodel
+2024-04-04 19:19:20,202 INFO    : [INFO] Saving model to models/train/bestmodel
+2024-04-04 19:19:20,203 INFO    : [INFO] Starting eval for this model ...
+2024-04-04 19:32:29,824 INFO    : [INFO] End of valid | time: 789.62s | valid loss 5.6999 | 
+2024-04-04 19:32:29,824 INFO    : Rouge1:
+	p:0.412910, r:0.485176, f:0.433509
+Rouge2:
+	p:0.179885, r:0.225525, f:0.192591
+Rougel:
+	p:0.372698, r:0.437418, f:0.391005
+
+2024-04-04 19:32:29,824 INFO    : [INFO] Validset match_true 13774, pred 40101, true 30173, total 402328, match 359602
+2024-04-04 19:32:29,824 INFO    : [INFO] The size of totalset is 13367, sent_number is 402328, accu is 0.893803, precision is 0.343483, recall is 0.456501, F is 0.392008
+2024-04-04 19:32:29,824 INFO    : [INFO] Found new best model with 5.699931 running_avg_loss. The original loss is None, Saving to models/eval/bestmodel_0
+2024-04-04 19:32:29,952 INFO    : [INFO] Found new best model with 0.392008 F. The original F is None, Saving to models/eval/bestFmodel
+2024-04-04 19:33:27,556 INFO    :        | end of iter   0 | time:  3.93s | train loss 0.0544 | 
+2024-04-04 19:42:49,051 INFO    :        | end of iter 100 | time:  4.94s | train loss 5.6194 | 
+2024-04-04 19:51:09,471 ERROR   : [Error] Caught keyboard interrupt on worker. Stopping supervisor...
+2024-04-04 19:51:09,629 INFO    : [INFO] Saving model to models/train/earlystop

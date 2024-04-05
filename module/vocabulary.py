@@ -23,6 +23,7 @@ PAD_TOKEN = '[PAD]' # This has a vocab id, which is used to pad the encoder inpu
 UNKNOWN_TOKEN = '[UNK]' # This has a vocab id, which is used to represent out-of-vocabulary words
 START_DECODING = '[START]' # This has a vocab id, which is used at the start of every decoder input sequence
 STOP_DECODING = '[STOP]' # This has a vocab id, which is used at the end of untruncated target sequences
+NAMED_ENTITIES = '[NAME]' # This has a vocab id, which is used to represent named entities
 
 # Note: none of [PAD], [UNK], [START], [STOP] should appear in the vocab file.
 
@@ -41,7 +42,7 @@ class Vocab(object):
         self._count = 0 # keeps track of total number of words in the Vocab
 
         # [UNK], [PAD], [START] and [STOP] get the ids 0,1,2,3.
-        for w in [PAD_TOKEN, UNKNOWN_TOKEN,  START_DECODING, STOP_DECODING]:
+        for w in [PAD_TOKEN, UNKNOWN_TOKEN,  START_DECODING, STOP_DECODING, NAMED_ENTITIES]:
             self._word_to_id[w] = self._count
             self._id_to_word[self._count] = w
             self._count += 1
@@ -55,8 +56,8 @@ class Vocab(object):
                 # pieces = line.split()
                 w = pieces[0]
                 # print(w)
-                if w in [UNKNOWN_TOKEN, PAD_TOKEN, START_DECODING, STOP_DECODING]:
-                    raise Exception('[UNK], [PAD], [START] and [STOP] shouldn\'t be in the vocab file, but %s is' % w)
+                if w in [UNKNOWN_TOKEN, PAD_TOKEN, START_DECODING, STOP_DECODING, NAMED_ENTITIES]:
+                    raise Exception('[UNK], [PAD], [START] and [STOP] and [NAME]  shouldn\'t be in the vocab file, but %s is' % w)
                 if w in self._word_to_id:
                     logger.error('Duplicated word in vocabulary file Line %d : %s' % (cnt, w))
                     continue

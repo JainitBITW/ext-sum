@@ -79,6 +79,7 @@ class HSumGraph(nn.Module):
         self.n_feature = hps.hidden_size
         self.wh = nn.Linear(self.n_feature, 2)
 
+
     def forward(self, graph):
         """
         :param graph: [batch_size] * DGLGraph
@@ -121,10 +122,10 @@ class HSumGraph(nn.Module):
             self.lstm_proj = nn.Linear(self.lstm_hidden_state * 2, self._hps.n_feature_size)
         else:
             self.lstm_proj = nn.Linear(self.lstm_hidden_state, self._hps.n_feature_size)
-
         self.ngram_enc = sentEncoder(self._hps, self._embed)
 
-    def _sent_cnn_feature(self, graph, snode_id):
+        
+    def  _sent_cnn_feature(self, graph, snode_id):
         ngram_feature = self.ngram_enc.forward(graph.nodes[snode_id].data["words"])  # [snode, embed_size]
         graph.nodes[snode_id].data["sent_embedding"] = ngram_feature
         snode_pos = graph.nodes[snode_id].data["position"].view(-1)  # [n_nodes]

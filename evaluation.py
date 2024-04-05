@@ -84,7 +84,7 @@ def run_test(model, dataset, loader, model_name, hps):
 
         for i, (G, index) in enumerate(loader):
             if hps.cuda:
-                G.to(torch.device(0))
+                G= G.to(torch.device(int(hps.gpu)))
             tester.evaluation(G, index, dataset, blocking=hps.blocking)
 
     running_avg_loss = tester.running_avg_loss
@@ -196,6 +196,7 @@ def main():
     logger.info("Pytorch %s", torch.__version__)
     logger.info("[INFO] Create Vocab, vocab path is %s", VOCAL_FILE)
     vocab = Vocab(VOCAL_FILE, args.vocab_size)
+    
     embed = torch.nn.Embedding(vocab.size(), args.word_emb_dim)
     if args.word_embedding:
         embed_loader = Word_Embedding(args.embedding_path, vocab)
@@ -224,7 +225,7 @@ def main():
         raise NotImplementedError("Model Type has not been implemented")
 
     if args.cuda:
-        model.to(torch.device("cuda:0"))
+        model = model.to(torch.device(int(args.gpu)))
         logger.info("[INFO] Use cuda")
 
     logger.info("[INFO] Decoding...")
